@@ -1,6 +1,6 @@
 import numpy as np
 
-def pdmm_sync(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, tolerance=1e-12):
+def pdmm_sync(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, tolerance=1e-12, transmission_loss_rate=0.0):
     true_avg = np.mean(sensor_values)
     n = len(sensor_values)
     neighbors = []
@@ -42,11 +42,12 @@ def pdmm_sync(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, toler
                 # AUXILARY UPDATES (TRANSMISSION)
                 n_transmissions += 1  # Transmission is defined as a node updating all of its neighbors
                 for j in neighbors[i]:
-                    z[j][i] = duals[i][j]   # Swap z_j|i with y_i|j
+                    if np.random.rand() >= transmission_loss_rate: # Update only if transmission loss does not occur
+                        z[j][i] = duals[i][j]   # Swap z_j|i with y_i|j
                 
     return errors, x_new, n_transmissions
 
-def pdmm_async(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, tolerance=1e-12):
+def pdmm_async(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, tolerance=1e-12, transmission_loss_rate=0.0):
     true_avg = np.mean(sensor_values)
     n = len(sensor_values)
     neighbors = []
@@ -94,7 +95,8 @@ def pdmm_async(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, tole
                 # AUXILARY UPDATES (TRANSMISSION)
                 n_transmissions += 1  # Transmission is defined as a node updating all of its neighbors
                 for j in neighbors[i]:
-                    z[j][i] = duals[i][j]   # Swap z_j|i with y_i|j
+                    if np.random.rand() >= transmission_loss_rate: # Update only if transmission loss does not occur
+                        z[j][i] = duals[i][j]   # Swap z_j|i with y_i|j
                 
     return errors, x_new, n_transmissions
 
