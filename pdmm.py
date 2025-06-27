@@ -49,8 +49,8 @@ def pdmm(sensor_values,adjacency_matrix):
         degrees.append(len(nbrs))
 
     x_old = sensor_values.copy()
-    duals = [dict() for _ in range(n)]
-    z = [dict() for _ in range(n)] 
+    duals = [dict() for _ in range(n)]      # y_i|j
+    z = [dict() for _ in range(n)]          # z_i|j
     for i in range(n):
         for j in neighbors[i]:
             duals[i][j] = 0.0
@@ -64,16 +64,16 @@ def pdmm(sensor_values,adjacency_matrix):
             
             for i in range(n):
                 #sum_duals = sum(duals[i][j] for j in neighbors[i])
-                sum_neighbors = sum(z[i][j]*adjacency_matrix[i][j] for j in neighbors[i])
-                x_new[i] = (sensor_values[i] - sum_neighbors) / (1 + rho * degrees[i])
-                for j in neighbors[i]:
-                    duals[i][j] = z[i][j] + 2*rho*adjacency_matrix[i][j]*x_new[i]
-            current_error = np.linalg.norm(x_new - true_avg)/initial_error
+                sum_neighbors = sum(z[i][j]*adjacency_matrix[i][j] for j in neighbors[i])           # Sum of A_ij^T z_i|j
+                x_new[i] = (sensor_values[i] - sum_neighbors) / (1 + rho * degrees[i])              # x_i update
+                for j in neighbors[i]:                                                              # y_i|j update:
+                    duals[i][j] = z[i][j] + 2*rho*adjacency_matrix[i][j]*x_new[i]                   # y_i|j = z_i|j + 2c * A_ij^T x_i
+            current_error = np.linalg.norm(x_new - true_avg)/initial_error                          # Why are we dividing by initial error?
             errors.append(current_error)
 
-            for i in range(n):
+            for i in range(n):                                                                      
                 for j in neighbors[i]:
-                    z[j][i] = duals[i][j]
+                    z[j][i] = duals[i][j]                                                           # Swap z_j|i with y_i|j
 
     return errors, x_new
 
