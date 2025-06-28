@@ -45,6 +45,6 @@ def pdmm_median(sensor_values, adjacency_matrix, rho, max_iter=1000):
 
         for i in range(n):
             for j in neighbors[i]:
-                z[j][i] = duals[i][j]
+                z[j][i] = 1/2*z[j][i] + 1/2*duals[i][j]
 
     return errors, x_new
