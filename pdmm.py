@@ -24,9 +24,7 @@ def pdmm_sync(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, toler
     x_new = np.zeros(n)
     n_transmissions = 0
     current_error = initial_error
-    while(max_transmissions > n_transmissions):
-            if current_error < tolerance:
-                break
+    while(True):
 
             for i in range(n):
                 # NODE UPDATES
@@ -44,8 +42,14 @@ def pdmm_sync(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, toler
                 for j in neighbors[i]:
                     if np.random.rand() >= transmission_loss_rate: # Update only if transmission loss does not occur
                         z[j][i] = duals[i][j]   # Swap z_j|i with y_i|j
+
+                if n_transmissions >= max_transmissions:
+                    print(f"(SYNC PDMM) Maximum number of transmissions ({max_transmissions}) reached.")
+                    return errors, x_new, n_transmissions
                 
-    return errors, x_new, n_transmissions
+                if current_error < tolerance:
+                    print(f"(ASYNC PDMM) Error below tolerance ({current_error}) reached.")
+                    return errors, x_new, n_transmissions
 
 def pdmm_async(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, tolerance=1e-12, transmission_loss_rate=0.0):
     true_avg = np.mean(sensor_values)
@@ -71,9 +75,7 @@ def pdmm_async(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, tole
     x_new = np.zeros(n)
     n_transmissions = 0
     current_error = initial_error
-    while(max_transmissions > n_transmissions):
-            if current_error < tolerance:
-                break
+    while(True):
             
             # Randomly select a subset of the nodes to update
             update_mask = np.random.randint(0, 2, size=n)
@@ -97,7 +99,13 @@ def pdmm_async(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, tole
                 for j in neighbors[i]:
                     if np.random.rand() >= transmission_loss_rate: # Update only if transmission loss does not occur
                         z[j][i] = duals[i][j]   # Swap z_j|i with y_i|j
+
+                if n_transmissions >= max_transmissions:
+                    print(f"(ASYNC PDMM) Maximum number of transmissions ({max_transmissions}) reached.")
+                    return errors, x_new, n_transmissions
                 
-    return errors, x_new, n_transmissions
+                if current_error < tolerance:
+                    print(f"(ASYNC PDMM) Error below tolerance ({current_error}) reached.")
+                    return errors, x_new, n_transmissions
 
 
