@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def gossip_step(sensor_values, adjacency_matrix, max_ticks):
+def gossip_step(sensor_values, adjacency_matrix, max_ticks, tolerance=1e-12):
     true_avg = np.mean(sensor_values) 
     n = len(sensor_values)
     initial_error = np.linalg.norm(sensor_values - true_avg)  # For normalization
@@ -34,6 +34,9 @@ def gossip_step(sensor_values, adjacency_matrix, max_ticks):
         current_error = np.linalg.norm(sensor_values - true_avg)
         relative_error = current_error / initial_error if initial_error > 0 else 0
         errors.append(relative_error)
+        if relative_error < tolerance:
+            print(f"Error below tolerance ({relative_error}) reached at transmission number {ticks}.")
+            break
         
     return sensor_values, errors, abs_time
 
