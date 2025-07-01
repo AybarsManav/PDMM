@@ -96,7 +96,8 @@ def pdmm_async(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, tole
                 
                 # AUXILARY UPDATES (TRANSMISSION)
                 n_transmissions += 1  # Transmission is defined as a node updating all of its neighbors
-                for j in neighbors[i]:
+                active_edge_neighbors = [j for j in neighbors[i] if np.random.rand() < 0.5]
+                for j in active_edge_neighbors:
                     if np.random.rand() >= transmission_loss_rate: # Update only if transmission loss does not occur
                         z[j][i] = duals[i][j]   # Swap z_j|i with y_i|j
 
