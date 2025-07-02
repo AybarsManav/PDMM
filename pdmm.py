@@ -48,7 +48,7 @@ def pdmm_sync(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, toler
                     return errors, x_new, n_transmissions
                 
                 if current_error < tolerance:
-                    print(f"(ASYNC PDMM) Error below tolerance ({current_error}) reached.")
+                    print(f"(SYNC PDMM) Error below tolerance ({current_error}) reached.")
                     return errors, x_new, n_transmissions
 
 def pdmm_async(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, tolerance=1e-12, transmission_loss_rate=0.0):

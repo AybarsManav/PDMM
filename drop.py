@@ -1,4 +1,5 @@
 import numpy as np
+from random_graph import is_connected
 
 # Helper function to drop nodes
 def drop_nodes(sensor_values, adjacency_matrix, num_drop=20):
@@ -37,11 +38,16 @@ def pdmm_sync_drop(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, 
     x_new = np.zeros(n)
     n_transmissions = 0
     current_error = initial_error
+    dropped = False
     while(max_transmissions > n_transmissions):
             if current_error < tolerance:
                 break
-            if n_transmissions == 2000:
+            if n_transmissions > 2000 and not dropped:  # Drop nodes after 2000 transmissions
+                dropped = True
                 sensor_values, adjacency_matrix = drop_nodes(sensor_values, adjacency_matrix, num_drop)
+                is_connected(adjacency_matrix)  # Check if the graph is still connected
+                print(f"Nodes dropped: {num_drop}, Remaining nodes: {len(sensor_values)}")
+                print(f"Graph is connected after drop: {is_connected(adjacency_matrix)}")
                 n = len(sensor_values)
                 neighbors = []
                 degrees = []
