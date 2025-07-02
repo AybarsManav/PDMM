@@ -42,11 +42,12 @@ def calculate_adjacency_matrix(positions, r):
                 adj_mat[i,j] = flag * node_connect(positions[:,i], positions[:,j], r)
     return adj_mat
 
-def plot_graph(sensor_positions, adjacency_matrix):
+def plot_graph(sensor_positions, adjacency_matrix, sensor_values=None):
     """
     Visualize the sensor network as a graph.
     sensor_positions: numpy array of shape (2, num_agents)
     adjacency_matrix: numpy array of shape (num_agents, num_agents)
+    sensor_values: optional numpy array of shape (num_agents,) for heatmap coloring
     """
     num_agents = sensor_positions.shape[1]
     plt.figure(figsize=(8, 8))
@@ -57,8 +58,15 @@ def plot_graph(sensor_positions, adjacency_matrix):
                 x = [sensor_positions[0, i], sensor_positions[0, j]]
                 y = [sensor_positions[1, i], sensor_positions[1, j]]
                 plt.plot(x, y, 'b-', alpha=0.3)
-    # Draw nodes
-    plt.scatter(sensor_positions[0, :], sensor_positions[1, :], c='r', s=30, zorder=5)
+    # Draw nodes with heatmap coloring if sensor_values provided
+    if sensor_values is not None:
+        scatter = plt.scatter(
+            sensor_positions[0, :], sensor_positions[1, :],
+            c=sensor_values, cmap='coolwarm', s=100, zorder=5, edgecolors='k'
+        )
+        plt.colorbar(scatter, label='Sensor Value')
+    else:
+        plt.scatter(sensor_positions[0, :], sensor_positions[1, :], c='r', s=30, zorder=5)
     plt.title("Sensor Network Graph")
     plt.xlabel("X")
     plt.ylabel("Y")
