@@ -93,19 +93,18 @@ def pdmm_async(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, tole
             continue
 
         for i in subset:
-            if not active_neighbors[i]:
-                continue
-
-            deg_i = len(active_neighbors[i])
-            sum_neighbors = sum(z[i][j] * adjacency_matrix[i][j] for j in active_neighbors[i])
+            # NODE UPDATES
+            deg_i = len(neighbors[i])
+            sum_neighbors = sum(z[i][j] * adjacency_matrix[i][j] for j in neighbors[i])
             x_new[i] = (sensor_values[i] - sum_neighbors) / (1 + rho * deg_i)
 
-            for j in active_neighbors[i]:
+            for j in neighbors[i]:
                 duals[i][j] = z[i][j] + 2 * rho * adjacency_matrix[i][j] * x_new[i]
 
             current_error = np.linalg.norm(x_new - true_avg) / initial_error
             errors.append(current_error)
 
+            # AUXILIARY EDGE UPDATES (TRANSMISSION)
             n_transmissions += 1
             for j in active_neighbors[i]:
                 if (i, j) in active_edges or (j, i) in active_edges:
