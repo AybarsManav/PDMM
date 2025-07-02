@@ -11,19 +11,25 @@ def node_connect(ag1,ag2, r):
     return(np.sqrt(np.sum((ag1[1]-ag2[1])**2 + (ag1[0]-ag2[0])**2)) <= r)
 
 def is_connected(A):
-    """
-    Check if the graph represented by adjacency matrix A is connected.
-    A: numpy array representing the adjacency matrix of the graph
-    Returns True if the graph is connected, False otherwise.
-    """
-    D = np.diag(np.sum(A, axis=1))
-    laplacian_matrix = D - abs(A)
+    n = len(A)
+    visited = set()
 
-    eigenvals = np.linalg.eigvalsh(laplacian_matrix)
-    zero_eigenvalues = np.sum(np.isclose(eigenvals, 0))
+    adj = [[] for _ in range(n)]
+    for i in range(n):
+        for j in range(n):
+            if abs(A[i][j]) == 1:  # edge exists
+                adj[i].append(j)
 
-    # Graph is connected if there is exactly one zero eigenvalue
-    return zero_eigenvalues == 1
+    def dfs(u):
+        visited.add(u)
+        for v in adj[u]:
+            if v not in visited:
+                dfs(v)
+
+    dfs(0)
+
+    return len(visited) == n
+
 
 def calculate_adjacency_matrix(positions, r):
     num_agents = positions.shape[1]

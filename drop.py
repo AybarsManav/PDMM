@@ -1,15 +1,15 @@
 import numpy as np
+from random_graph import is_connected
 
 # Helper function to drop nodes
-def drop_nodes(sensor_values, adjacency_matrix, num_drop=20,x_old = None):
+def drop_nodes(sensor_values, adjacency_matrix, num_drop=20):
     n = adjacency_matrix.shape[0]
     ids = np.random.choice(n, num_drop, replace=False)
     mask = np.ones(n, dtype=bool)
     mask[ids] = False
     new_sensor_values = sensor_values[mask]
     new_adjacency_matrix = adjacency_matrix[np.ix_(mask, mask)]
-    x = x_old[mask]
-    return new_sensor_values, new_adjacency_matrix,x,mask
+    return new_sensor_values, new_adjacency_matrix
 
 # Usage example (before calling PDMM functions):
 # sensor_values, adjacency_matrix = drop_nodes(sensor_values, adjacency_matrix, num_drop=20)
@@ -38,15 +38,16 @@ def pdmm_sync_drop(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, 
     x_new = np.zeros(n)
     n_transmissions = 0
     current_error = initial_error
+    dropped = False
     while(max_transmissions > n_transmissions):
             if current_error < tolerance:
                 break
-            if n_transmissions == 2000:
-                print(f"Dropping {num_drop} nodes at transmission {n_transmissions}")
-
-                sensor_values, adjacency_matrix,x,mask = drop_nodes(sensor_values, adjacency_matrix, num_drop, x_new)
-                x_new = x.copy()
-
+            if n_transmissions > 2000 and not dropped:  # Drop nodes after 2000 transmissions
+                dropped = True
+                sensor_values, adjacency_matrix = drop_nodes(sensor_values, adjacency_matrix, num_drop)
+                is_connected(adjacency_matrix)  # Check if the graph is still connected
+                print(f"Nodes dropped: {num_drop}, Remaining nodes: {len(sensor_values)}")
+                print(f"Graph is connected after drop: {is_connected(adjacency_matrix)}")
                 n = len(sensor_values)
                 neighbors = []
                 degrees = []
@@ -54,18 +55,16 @@ def pdmm_sync_drop(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, 
                     nbrs = list(np.where(adjacency_matrix[i] != 0)[0])
                     neighbors.append(nbrs)
                     degrees.append(len(nbrs))
-                duals = [dict() for _ in range(n)]  # ← NEW EMPTY DICTS
-                z = [dict() for _ in range(n)]
-
+                x_old = sensor_values.copy()
+                duals = [dict() for _ in range(n)]
+                z = [dict() for _ in range(n)]  # <-- reinitialize z!
                 for i in range(n):
                     for j in neighbors[i]:
-                        duals[i][j] = 0.0  
-                        z[i][j] = 0.0  
-                
-                true_avg = np.mean(sensor_values)
-                initial_error = np.linalg.norm(x_new - true_avg)
-                break
-
+                        duals[i][j] = 0.0
+                        z[i][j] = 0
+                x_new = x_old.copy()  
+                true_avg = np.mean(sensor_values)  
+                initial_error = np.linalg.norm(x_old - true_avg)  
             for i in range(n):
                 # NODE UPDATES
                 sum_neighbors = sum(z[i][j]*adjacency_matrix[i][j] for j in neighbors[i])           # Sum of A_ij^T z_i|j
