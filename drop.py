@@ -1,14 +1,15 @@
 import numpy as np
 
 # Helper function to drop nodes
-def drop_nodes(sensor_values, adjacency_matrix, num_drop=20):
+def drop_nodes(sensor_values, adjacency_matrix, num_drop=20,x_old = None):
     n = adjacency_matrix.shape[0]
     ids = np.random.choice(n, num_drop, replace=False)
     mask = np.ones(n, dtype=bool)
     mask[ids] = False
     new_sensor_values = sensor_values[mask]
     new_adjacency_matrix = adjacency_matrix[np.ix_(mask, mask)]
-    return new_sensor_values, new_adjacency_matrix
+    x = x_old[mask]
+    return new_sensor_values, new_adjacency_matrix,x,mask
 
 # Usage example (before calling PDMM functions):
 # sensor_values, adjacency_matrix = drop_nodes(sensor_values, adjacency_matrix, num_drop=20)
@@ -41,7 +42,11 @@ def pdmm_sync_drop(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, 
             if current_error < tolerance:
                 break
             if n_transmissions == 2000:
-                sensor_values, adjacency_matrix = drop_nodes(sensor_values, adjacency_matrix, num_drop)
+                print(f"Dropping {num_drop} nodes at transmission {n_transmissions}")
+
+                sensor_values, adjacency_matrix,x,mask = drop_nodes(sensor_values, adjacency_matrix, num_drop, x_new)
+                x_new = x.copy()
+
                 n = len(sensor_values)
                 neighbors = []
                 degrees = []
@@ -49,16 +54,18 @@ def pdmm_sync_drop(sensor_values, adjacency_matrix, rho, max_transmissions=3e4, 
                     nbrs = list(np.where(adjacency_matrix[i] != 0)[0])
                     neighbors.append(nbrs)
                     degrees.append(len(nbrs))
-                x_old = sensor_values.copy()
-                duals = [dict() for _ in range(n)]
-                z = [dict() for _ in range(n)]  # <-- reinitialize z!
+                duals = [dict() for _ in range(n)]  # ← NEW EMPTY DICTS
+                z = [dict() for _ in range(n)]
+
                 for i in range(n):
                     for j in neighbors[i]:
-                        duals[i][j] = 0.0
-                        z[i][j] = 0
-                x_new = x_old.copy()  
-                true_avg = np.mean(sensor_values)  
-                initial_error = np.linalg.norm(x_old - true_avg)  
+                        duals[i][j] = 0.0  
+                        z[i][j] = 0.0  
+                
+                true_avg = np.mean(sensor_values)
+                initial_error = np.linalg.norm(x_new - true_avg)
+                break
+
             for i in range(n):
                 # NODE UPDATES
                 sum_neighbors = sum(z[i][j]*adjacency_matrix[i][j] for j in neighbors[i])           # Sum of A_ij^T z_i|j
